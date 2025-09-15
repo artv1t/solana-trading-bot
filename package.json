@@ -5,7 +5,9 @@
   "version": "2.0.1",
   "scripts": {
     "start": "ts-node index.ts",
-    "tsc": "tsc --noEmit"
+    "tsc": "tsc --noEmit",
+    "rebuild": "npm rebuild",
+    "postinstall": "npm rebuild"
   },
   "dependencies": {
     "@metaplex-foundation/mpl-token-metadata": "^3.2.1",
