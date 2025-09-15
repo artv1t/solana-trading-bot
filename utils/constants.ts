@@ -105,6 +105,12 @@ export const STATS_LOG_INTERVAL = getEnvNumber('STATS_LOG_INTERVAL', 300000);
 export const ENABLE_ALERTS = getEnvBoolean('ENABLE_ALERTS', true);
 export const WEBHOOK_URL = process.env.WEBHOOK_URL || '';
 
+// Test Mode
+export const TEST_MODE = getEnvBoolean('TEST_MODE', false);
+
+// Balance Check
+export const MIN_SOL_BALANCE = getEnvNumber('MIN_SOL_BALANCE', 0.1);
+
 // Legacy constants for backward compatibility
 export const CHECK_IF_MUTABLE = !CHECK_IMMUTABLE_METADATA;
 export const CHECK_IF_SOCIALS = REQUIRE_SOCIALS;

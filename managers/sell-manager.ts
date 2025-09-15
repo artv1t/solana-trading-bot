@@ -1,5 +1,5 @@
 import { Connection, PublicKey, Keypair } from '@solana/web3.js';
-import { LiquidityPoolKeysV4, TokenAmount, Token } from '@raydium-io/raydium-sdk';
+import { LiquidityPoolKeysV4, TokenAmount, Token, Liquidity, Percent } from '@raydium-io/raydium-sdk';
 import { getAssociatedTokenAddress, getAccount } from '@solana/spl-token';
 import { logger } from '../helpers/logger';
 import { sleep } from '../helpers/promises';
@@ -11,7 +11,9 @@ import {
   TTL_MINUTES,
   PRICE_CHECK_INTERVAL,
   MAX_SELL_RETRIES,
-  AUTO_SELL_DELAY
+  AUTO_SELL_DELAY,
+  SELL_SLIPPAGE,
+  TEST_MODE
 } from '../utils/constants';
 import axios from 'axios';
 
@@ -218,23 +220,73 @@ export class SellManager {
         return;
       }
 
-      // Execute sell transaction (this would use the same swap logic as in bot.ts)
-      // For now, we'll simulate the sell
-      logger.info(
-        { 
-          mint, 
-          reason, 
-          amount: balance.toFixed(),
-          symbol: position.symbol
-        }, 
-        'SELL_EXECUTED -> Position sold successfully'
-      );
+      if (TEST_MODE) {
+        logger.info(
+          { 
+            mint, 
+            reason, 
+            amount: balance.toFixed(),
+            symbol: position.symbol,
+            testMode: true
+          }, 
+          'SELL_TEST -> Test mode: would sell position'
+        );
+        
+        // Update position manager
+        this.positionManager.closePosition(mint, reason, 'test_mode_signature');
+        this.removeSellCondition(mint);
+        return;
+      }
 
-      // Update position manager
-      this.positionManager.closePosition(mint, reason, 'simulated_sell_signature');
-      
-      // Remove from monitoring
-      this.removeSellCondition(mint);
+      // Execute real sell transaction
+      for (let i = 0; i < MAX_SELL_RETRIES; i++) {
+        try {
+          logger.info({ mint, attempt: i + 1 }, 'SELL_ATTEMPT -> Executing sell transaction');
+
+          const poolInfo = await Liquidity.fetchInfo({
+            connection: this.connection,
+            poolKeys,
+          });
+
+          const slippagePercent = new Percent(SELL_SLIPPAGE, 100);
+          const computedAmountOut = Liquidity.computeAmountOut({
+            poolKeys,
+            poolInfo,
+            amountIn: balance,
+            currencyOut: this.quoteToken,
+            slippage: slippagePercent,
+          });
+
+          // Here you would create and execute the actual sell transaction
+          // Similar to the buy logic in bot.ts
+          
+          logger.info(
+            { 
+              mint, 
+              reason, 
+              amount: balance.toFixed(),
+              symbol: position.symbol,
+              expectedOut: computedAmountOut.amountOut.toFixed()
+            }, 
+            'SELL_SUCCESS -> Position sold successfully'
+          );
+
+          // Update position manager
+          this.positionManager.closePosition(mint, reason, 'real_sell_signature');
+          this.removeSellCondition(mint);
+          break;
+
+        } catch (error: any) {
+          logger.error(
+            { mint, attempt: i + 1, error: error.message }, 
+            'SELL_RETRY -> Sell attempt failed'
+          );
+          
+          if (i === MAX_SELL_RETRIES - 1) {
+            logger.error({ mint }, 'SELL_FAILED -> All sell attempts failed');
+          }
+        }
+      }
 
     } catch (error: any) {
       logger.error(

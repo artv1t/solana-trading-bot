@@ -28,6 +28,11 @@ import { Mutex } from 'async-mutex';
 import BN from 'bn.js';
 import { WarpTransactionExecutor } from './transactions/warp-transaction-executor';
 import { JitoTransactionExecutor } from './transactions/jito-rpc-transaction-executor';
+import { 
+  TEST_MODE, 
+  MIN_SOL_BALANCE,
+  NETWORK 
+} from './utils/constants';
 
 export interface BotConfig {
   wallet: Keypair;
@@ -136,6 +141,15 @@ export class Bot {
       return;
     }
 
+    // Check wallet balance
+    const balance = await this.connection.getBalance(this.config.wallet.publicKey);
+    const solBalance = balance / 1e9; // Convert lamports to SOL
+    
+    if (solBalance < MIN_SOL_BALANCE) {
+      logger.warn({ mint, balance: solBalance }, 'SKIP_INSUFFICIENT_BALANCE -> Not enough SOL for transaction');
+      return;
+    }
+
     if (this.config.useSnipeList && !this.snipeListCache?.isInList(poolState.baseMint.toString())) {
       logger.debug({ mint }, `SKIP_SNIPE_LIST -> Token not in snipe list`);
       return;
@@ -177,6 +191,23 @@ export class Bot {
 
       logger.info({ mint }, 'BUY_ATTEMPT -> All filters passed, attempting to buy');
 
+      if (TEST_MODE) {
+        logger.info({ mint, testMode: true }, 'BUY_TEST -> Test mode: would buy token');
+        
+        // Simulate position creation in test mode
+        const buyPrice = 0.001; // Simulated price
+        this.positionManager.addPosition(
+          mint,
+          'TEST',
+          buyPrice,
+          this.config.quoteAmount,
+          'test_mode_signature'
+        );
+        
+        this.statistics.incrementBought(parseFloat(this.config.quoteAmount.toExact()));
+        return;
+      }
+
       for (let i = 0; i < this.config.maxBuyRetries; i++) {
         try {
           logger.info(
@@ -207,10 +238,10 @@ export class Bot {
             );
 
             // Add position to manager
-            const buyPrice = 0; // Would need to calculate from swap result
+            const buyPrice = await this.calculateBuyPrice(poolKeys, this.config.quoteAmount);
             this.positionManager.addPosition(
               mint,
-              'UNKNOWN', // Would need to get symbol from metadata
+              await this.getTokenSymbol(poolKeys.baseMint),
               buyPrice,
               this.config.quoteAmount,
               result.signature || ''
@@ -261,6 +292,49 @@ export class Bot {
       if (this.config.oneTokenAtATime) {
         this.mutex.release();
       }
+    }
+  }
+
+  private async calculateBuyPrice(poolKeys: LiquidityPoolKeysV4, quoteAmount: TokenAmount): Promise<number> {
+    try {
+      // Get current pool info to calculate price
+      const poolInfo = await Liquidity.fetchInfo({
+        connection: this.connection,
+        poolKeys,
+      });
+      
+      // Calculate expected output for price estimation
+      const computedAmountOut = Liquidity.computeAmountOut({
+        poolKeys,
+        poolInfo,
+        amountIn: quoteAmount,
+        currencyOut: new Token(TOKEN_PROGRAM_ID, poolKeys.baseMint, poolKeys.baseDecimals),
+        slippage: new Percent(this.config.buySlippage, 100),
+      });
+      
+      const price = parseFloat(quoteAmount.toExact()) / parseFloat(computedAmountOut.amountOut.toExact());
+      return price;
+    } catch (error) {
+      logger.error({ error }, 'Failed to calculate buy price');
+      return 0.001; // Fallback price
+    }
+  }
+
+  private async getTokenSymbol(mint: PublicKey): Promise<string> {
+    try {
+      // Get token metadata to extract symbol
+      const metadataPDA = getPdaMetadataKey(mint);
+      const metadataAccount = await this.connection.getAccountInfo(metadataPDA.publicKey);
+      
+      if (metadataAccount?.data) {
+        const metadataSerializer = getMetadataAccountDataSerializer();
+        const metadata = metadataSerializer.deserialize(metadataAccount.data);
+        return metadata[0].symbol || 'UNKNOWN';
+      }
+      
+      return 'UNKNOWN';
+    } catch (error) {
+      return 'UNKNOWN';
     }
   }
 

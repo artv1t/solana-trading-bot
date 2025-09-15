@@ -47,10 +47,9 @@ import {
   CONSECUTIVE_FILTER_MATCHES,
 } from './helpers';
 import { version } from './package.json';
-import { Statistics } from './utils/statistics';
-import { AlertManager } from './utils/alerts';
 import { WarpTransactionExecutor } from './transactions/warp-transaction-executor';
 import { JitoTransactionExecutor } from './transactions/jito-rpc-transaction-executor';
+import { TEST_MODE } from './utils/constants';
 
 const connection = new Connection(RPC_ENDPOINT, {
   wsEndpoint: RPC_WEBSOCKET_ENDPOINT,
@@ -115,6 +114,12 @@ function printDetails(wallet: Keypair, quoteToken: Token, bot: Bot) {
   logger.info(`Take profit: ${botConfig.takeProfit}%`);
   logger.info(`Stop loss: ${botConfig.stopLoss}%`);
 
+  logger.info('- Mode -');
+  logger.info(`Test mode: ${TEST_MODE}`);
+  if (TEST_MODE) {
+    logger.warn('⚠️  RUNNING IN TEST MODE - NO REAL TRANSACTIONS WILL BE EXECUTED ⚠️');
+  }
+
   logger.info('- Snipe list -');
   logger.info(`Snipe list: ${botConfig.useSnipeList}`);
   logger.info(`Snipe list refresh interval: ${SNIPE_LIST_REFRESH_INTERVAL} ms`);
@@ -142,6 +147,17 @@ function printDetails(wallet: Keypair, quoteToken: Token, bot: Bot) {
 const runListener = async () => {
   logger.level = LOG_LEVEL;
   logger.info('Bot is starting...');
+
+  // Validate configuration
+  if (!PRIVATE_KEY || PRIVATE_KEY === 'your_private_key_here') {
+    logger.error('PRIVATE_KEY is not set in .env file');
+    process.exit(1);
+  }
+
+  if (!RPC_ENDPOINT.startsWith('http')) {
+    logger.error('Invalid RPC_ENDPOINT in .env file');
+    process.exit(1);
+  }
 
   const marketCache = new MarketCache(connection);
   const poolCache = new PoolCache();
