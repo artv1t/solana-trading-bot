@@ -1,8 +1,9 @@
 import { LIQUIDITY_STATE_LAYOUT_V4, MAINNET_PROGRAM_ID, MARKET_STATE_LAYOUT_V3, Token } from '@raydium-io/raydium-sdk';
 import bs58 from 'bs58';
-import { Connection, PublicKey } from '@solana/web3.js';
+import { Connection, PublicKey, KeyedAccountInfo } from '@solana/web3.js';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { EventEmitter } from 'events';
+import { logger } from '../helpers';
 
 export class Listeners extends EventEmitter {
   private subscriptions: number[] = [];
@@ -20,15 +21,20 @@ export class Listeners extends EventEmitter {
     if (config.cacheNewMarkets) {
       const openBookSubscription = await this.subscribeToOpenBookMarkets(config);
       this.subscriptions.push(openBookSubscription);
+      logger.info('LISTENER -> Subscribed to OpenBook markets');
     }
 
     const raydiumSubscription = await this.subscribeToRaydiumPools(config);
     this.subscriptions.push(raydiumSubscription);
+    logger.info('LISTENER -> Subscribed to Raydium pools');
 
     if (config.autoSell) {
       const walletSubscription = await this.subscribeToWalletChanges(config);
       this.subscriptions.push(walletSubscription);
+      logger.info('LISTENER -> Subscribed to wallet changes');
     }
+
+    logger.info(`LISTENER -> Started with ${this.subscriptions.length} active subscriptions`);
   }
 
   private async subscribeToOpenBookMarkets(config: { quoteToken: Token }) {
@@ -53,7 +59,10 @@ export class Listeners extends EventEmitter {
   private async subscribeToRaydiumPools(config: { quoteToken: Token }) {
     return this.connection.onProgramAccountChange(
       MAINNET_PROGRAM_ID.AmmV4,
-      async (updatedAccountInfo) => {
+      async (updatedAccountInfo: KeyedAccountInfo) => {
+        logger.trace({ 
+          account: updatedAccountInfo.accountId.toString() 
+        }, 'DETECTED_POOL -> New Raydium pool detected');
         this.emit('pool', updatedAccountInfo);
       },
       this.connection.commitment,
@@ -84,7 +93,10 @@ export class Listeners extends EventEmitter {
   private async subscribeToWalletChanges(config: { walletPublicKey: PublicKey }) {
     return this.connection.onProgramAccountChange(
       TOKEN_PROGRAM_ID,
-      async (updatedAccountInfo) => {
+      async (updatedAccountInfo: KeyedAccountInfo) => {
+        logger.trace({ 
+          account: updatedAccountInfo.accountId.toString() 
+        }, 'WALLET_CHANGE -> Token account balance changed');
         this.emit('wallet', updatedAccountInfo);
       },
       this.connection.commitment,
@@ -103,10 +115,14 @@ export class Listeners extends EventEmitter {
   }
 
   public async stop() {
+    logger.info('LISTENER -> Stopping all subscriptions...');
     for (let i = this.subscriptions.length; i >= 0; --i) {
       const subscription = this.subscriptions[i];
-      await this.connection.removeAccountChangeListener(subscription);
-      this.subscriptions.splice(i, 1);
+      if (subscription !== undefined) {
+        await this.connection.removeAccountChangeListener(subscription);
+        this.subscriptions.splice(i, 1);
+      }
     }
+    logger.info('LISTENER -> All subscriptions stopped');
   }
 }
