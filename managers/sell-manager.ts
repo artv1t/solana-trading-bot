@@ -1,7 +1,7 @@
 import { Connection, PublicKey, Keypair } from '@solana/web3.js';
 import { LiquidityPoolKeysV4, TokenAmount, Token } from '@raydium-io/raydium-sdk';
 import { getAssociatedTokenAddress, getAccount } from '@solana/spl-token';
-import { logger } from '../helpers';
+import { logger } from '../helpers/logger';
 import { sleep } from '../helpers/promises';
 import { PositionManager, Position } from './position-manager';
 import { TransactionExecutor } from '../transactions';

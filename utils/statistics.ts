@@ -1,4 +1,4 @@
-import { logger } from '../helpers';
+import { logger } from '../helpers/logger';
 import { PositionManager } from '../managers/position-manager';
 import { ENABLE_STATISTICS, STATS_LOG_INTERVAL } from './constants';
 

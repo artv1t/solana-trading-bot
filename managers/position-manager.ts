@@ -1,6 +1,6 @@
 import { PublicKey } from '@solana/web3.js';
 import { TokenAmount, Token } from '@raydium-io/raydium-sdk';
-import { logger } from '../helpers';
+import { logger } from '../helpers/logger';
 
 export interface Position {
   mint: string;

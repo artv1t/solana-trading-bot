@@ -47,6 +47,8 @@ import {
   CONSECUTIVE_FILTER_MATCHES,
 } from './helpers';
 import { version } from './package.json';
+import { Statistics } from './utils/statistics';
+import { AlertManager } from './utils/alerts';
 import { WarpTransactionExecutor } from './transactions/warp-transaction-executor';
 import { JitoTransactionExecutor } from './transactions/jito-rpc-transaction-executor';
 

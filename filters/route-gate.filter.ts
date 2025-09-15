@@ -1,6 +1,6 @@
 import { Filter, FilterResult } from './pool-filters';
 import { LiquidityPoolKeysV4, TokenAmount } from '@raydium-io/raydium-sdk';
-import { logger } from '../helpers';
+import { logger } from '../helpers/logger';
 import { MAX_PRICE_IMPACT, ROUTE_CHECK_TIMEOUT, QUOTE_AMOUNT } from '../utils/constants';
 import axios from 'axios';
 

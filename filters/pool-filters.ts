@@ -1,6 +1,6 @@
 import { Connection } from '@solana/web3.js';
 import { LiquidityPoolKeysV4, Token, TokenAmount } from '@raydium-io/raydium-sdk';
-import { logger } from '../helpers';
+import { logger } from '../helpers/logger';
 import { RouteGateFilter } from './route-gate.filter';
 import { OnChainFilter } from './on-chain.filter';
 import { DexScreenerFilter } from './dexscreener.filter';

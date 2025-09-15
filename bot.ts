@@ -18,7 +18,8 @@ import { Liquidity, LiquidityPoolKeysV4, LiquidityStateV4, Percent, Token, Token
 import { MarketCache, PoolCache, SnipeListCache } from './cache';
 import { PoolFilters } from './filters';
 import { TransactionExecutor } from './transactions';
-import { createPoolKeys, logger, NETWORK, sleep } from './helpers';
+import { createPoolKeys, NETWORK, sleep } from './helpers';
+import { logger } from './helpers/logger';
 import { PositionManager } from './managers/position-manager';
 import { SellManager } from './managers/sell-manager';
 import { Statistics } from './utils/statistics';

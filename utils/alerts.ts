@@ -1,4 +1,4 @@
-import { logger } from '../helpers';
+import { logger } from '../helpers/logger';
 import { ENABLE_ALERTS, WEBHOOK_URL } from './constants';
 import axios from 'axios';
 

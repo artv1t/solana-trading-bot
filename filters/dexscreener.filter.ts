@@ -1,6 +1,6 @@
 import { Filter, FilterResult } from './pool-filters';
 import { LiquidityPoolKeysV4 } from '@raydium-io/raydium-sdk';
-import { logger } from '../helpers';
+import { logger } from '../helpers/logger';
 import {
   DEXSCREENER_CHECK_INTERVAL,
   DEXSCREENER_MAX_WAIT_MINUTES,
