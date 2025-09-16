@@ -20,6 +20,8 @@ import { PoolFilters } from './filters';
 import { TransactionExecutor } from './transactions';
 import { createPoolKeys, NETWORK, sleep } from './helpers';
 import { logger } from './helpers/logger';
+import { getPdaMetadataKey } from '@raydium-io/raydium-sdk';
+import { getMetadataAccountDataSerializer } from '@metaplex-foundation/mpl-token-metadata';
 import { PositionManager } from './managers/position-manager';
 import { SellManager } from './managers/sell-manager';
 import { Statistics } from './utils/statistics';
@@ -31,7 +33,6 @@ import { JitoTransactionExecutor } from './transactions/jito-rpc-transaction-exe
 import { 
   TEST_MODE, 
   MIN_SOL_BALANCE,
-  NETWORK 
 } from './utils/constants';
 
 export interface BotConfig {

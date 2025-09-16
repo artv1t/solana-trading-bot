@@ -56,6 +56,7 @@ export const MAX_SELL_RETRIES = getEnvNumber('MAX_SELL_RETRIES', 3);
 export const AUTO_SELL_DELAY = getEnvNumber('AUTO_SELL_DELAY', 2000);
 export const TAKE_PROFIT = getEnvNumber('TAKE_PROFIT', 50);
 export const STOP_LOSS = getEnvNumber('STOP_LOSS', 30);
+export const SELL_SLIPPAGE = getEnvNumber('SELL_SLIPPAGE', 15);
 export const TTL_MINUTES = getEnvNumber('TTL_MINUTES', 30);
 export const PRICE_CHECK_INTERVAL = getEnvNumber('PRICE_CHECK_INTERVAL', 5000);
 

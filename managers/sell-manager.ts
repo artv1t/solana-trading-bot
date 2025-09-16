@@ -4,7 +4,7 @@ import { getAssociatedTokenAddress, getAccount } from '@solana/spl-token';
 import { logger } from '../helpers/logger';
 import { sleep } from '../helpers/promises';
 import { PositionManager, Position } from './position-manager';
-import { TransactionExecutor } from '../transactions';
+import { TransactionExecutor } from '../transactions/transaction-executor.interface';
 import {
   TAKE_PROFIT,
   STOP_LOSS,

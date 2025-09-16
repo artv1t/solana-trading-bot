@@ -3,7 +3,8 @@ import { Connection, PublicKey } from '@solana/web3.js';
 import { LiquidityPoolKeysV4, TokenAmount, Token } from '@raydium-io/raydium-sdk';
 import { MintLayout, TOKEN_2022_PROGRAM_ID } from '@solana/spl-token';
 import { getPdaMetadataKey } from '@raydium-io/raydium-sdk';
-import { getMetadataAccountDataSerializer } from '@metaplex-foundation/mpl-token-metadata';
+import { getMetadataAccountDataSerializer, MetadataAccountData, MetadataAccountDataArgs } from '@metaplex-foundation/mpl-token-metadata';
+import { Serializer } from '@metaplex-foundation/umi/serializers';
 import { logger } from '../helpers/logger';
 import {
   CHECK_IMMUTABLE_METADATA,
